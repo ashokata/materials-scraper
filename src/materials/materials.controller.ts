@@ -28,6 +28,28 @@ class BulkDeleteDto {
   daysOld?: number;
 }
 
+class CreateMaterialDto {
+  sku: string;
+  source: 'HOMEDEPOT' | 'LOWES';
+  name: string;
+  brand?: string;
+  category?: string;
+  subcategory?: string;
+  description?: string;
+  price: number;
+  originalPrice?: number;
+  imageUrl?: string;
+  productUrl: string;
+  specifications?: Record<string, string>;
+  availability?: string;
+  rating?: number;
+  reviewCount?: number;
+}
+
+class BulkCreateMaterialsDto {
+  materials: CreateMaterialDto[];
+}
+
 @Controller('api/materials')
 @UseGuards(BasicAuthGuard)
 export class MaterialsController {
@@ -97,5 +119,59 @@ export class MaterialsController {
   @Post('cleanup')
   async cleanupOldMaterials(@Body() body: BulkDeleteDto) {
     return this.materialsService.deleteOldMaterials(body.daysOld || 90);
+  }
+
+  @Post()
+  async createMaterial(@Body() body: CreateMaterialDto) {
+    return this.materialsService.upsertMaterial(
+      body.source as Source,
+      {
+        sku: body.sku,
+        name: body.name,
+        brand: body.brand || '',
+        price: body.price,
+        originalPrice: body.originalPrice,
+        url: body.productUrl,
+        image: body.imageUrl || '',
+        availability: body.availability || 'Check store',
+        rating: body.rating,
+        reviewCount: body.reviewCount,
+      },
+      body.category,
+      body.subcategory,
+    );
+  }
+
+  @Post('bulk')
+  async bulkCreateMaterials(@Body() body: BulkCreateMaterialsDto) {
+    const results = { success: 0, failed: 0, errors: [] as string[] };
+
+    for (const material of body.materials) {
+      try {
+        await this.materialsService.upsertMaterial(
+          material.source as Source,
+          {
+            sku: material.sku,
+            name: material.name,
+            brand: material.brand || '',
+            price: material.price,
+            originalPrice: material.originalPrice,
+            url: material.productUrl,
+            image: material.imageUrl || '',
+            availability: material.availability || 'Check store',
+            rating: material.rating,
+            reviewCount: material.reviewCount,
+          },
+          material.category,
+          material.subcategory,
+        );
+        results.success++;
+      } catch (e) {
+        results.failed++;
+        results.errors.push(`${material.sku}: ${e}`);
+      }
+    }
+
+    return results;
   }
 }
