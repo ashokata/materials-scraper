@@ -1,0 +1,379 @@
+{
+  "info": {
+    "name": "Materials API",
+    "description": "Home Depot Materials Scraper API\n\nBase URL: https://materials.infieldr.tech\n\nAuthentication: Basic Auth\n- Username: admin\n- Password: Infieldr_Materials_2024!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "admin",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "Infieldr_Materials_2024!",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://materials.infieldr.tech",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Materials",
+      "item": [
+        {
+          "name": "Get All Materials",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials?page=1&limit=24",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "24",
+                  "description": "Items per page (default: 24)"
+                },
+                {
+                  "key": "source",
+                  "value": "HOMEDEPOT",
+                  "description": "Filter by source: HOMEDEPOT or LOWES",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "Electrical",
+                  "description": "Filter by category",
+                  "disabled": true
+                },
+                {
+                  "key": "brand",
+                  "value": "Leviton",
+                  "description": "Filter by brand",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "GFCI",
+                  "description": "Search in name/description",
+                  "disabled": true
+                },
+                {
+                  "key": "minPrice",
+                  "value": "10",
+                  "description": "Minimum price filter",
+                  "disabled": true
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "100",
+                  "description": "Maximum price filter",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of materials with optional filters"
+          }
+        },
+        {
+          "name": "Get Material by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "9adec8a4-8c90-4c39-ba35-ac1d3fa8a905",
+                  "description": "Material UUID"
+                }
+              ]
+            },
+            "description": "Get a single material by its UUID"
+          }
+        },
+        {
+          "name": "Get Material by SKU",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/sku/:sku?source=HOMEDEPOT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", "sku", ":sku"],
+              "query": [
+                {
+                  "key": "source",
+                  "value": "HOMEDEPOT",
+                  "description": "Optional: specify source if SKU exists in multiple"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "sku",
+                  "value": "205996763",
+                  "description": "Product SKU (e.g., Home Depot item number)"
+                }
+              ]
+            },
+            "description": "Get a material by its SKU number"
+          }
+        },
+        {
+          "name": "Create/Update Material",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"123456789\",\n  \"source\": \"HOMEDEPOT\",\n  \"name\": \"Test Product Name\",\n  \"brand\": \"Brand Name\",\n  \"category\": \"Electrical\",\n  \"subcategory\": \"Outlets\",\n  \"description\": \"Product description here\",\n  \"price\": 19.99,\n  \"originalPrice\": 24.99,\n  \"imageUrl\": \"https://example.com/image.jpg\",\n  \"productUrl\": \"https://homedepot.com/p/product/123456789\",\n  \"availability\": \"In Stock\",\n  \"rating\": 4.5,\n  \"reviewCount\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/materials",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials"]
+            },
+            "description": "Create a new material or update existing (upsert by SKU + source)"
+          }
+        },
+        {
+          "name": "Bulk Create Materials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"materials\": [\n    {\n      \"sku\": \"111111111\",\n      \"source\": \"HOMEDEPOT\",\n      \"name\": \"Product 1\",\n      \"brand\": \"Brand A\",\n      \"category\": \"Electrical\",\n      \"price\": 9.99,\n      \"productUrl\": \"https://homedepot.com/p/product/111111111\"\n    },\n    {\n      \"sku\": \"222222222\",\n      \"source\": \"HOMEDEPOT\",\n      \"name\": \"Product 2\",\n      \"brand\": \"Brand B\",\n      \"category\": \"Plumbing\",\n      \"price\": 19.99,\n      \"productUrl\": \"https://homedepot.com/p/product/222222222\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", "bulk"]
+            },
+            "description": "Create/update multiple materials at once"
+          }
+        },
+        {
+          "name": "Delete Material",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "uuid-here",
+                  "description": "Material UUID to delete"
+                }
+              ]
+            },
+            "description": "Delete a material by ID"
+          }
+        },
+        {
+          "name": "Cleanup Old Materials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"daysOld\": 90\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/cleanup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", "cleanup"]
+            },
+            "description": "Delete materials not updated in X days (default: 90)"
+          }
+        },
+        {
+          "name": "Scrape On-Demand (Scrapfly)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"search\": \"pool pump\",\n  \"source\": \"HOMEDEPOT\",\n  \"category\": \"Pool\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/scrape",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", "scrape"]
+            },
+            "description": "Scrape Home Depot/Lowes via Scrapfly (~$0.001/request). Call this ONLY when user clicks 'Search online' button. Source: HOMEDEPOT, LOWES, or BOTH"
+          }
+        },
+        {
+          "name": "Scrapfly Usage Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/scrape-usage",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", "scrape-usage"]
+            },
+            "description": "Get Scrapfly usage stats: hourly/daily counts, limits, estimated cost, recent searches"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statistics & Metadata",
+      "item": [
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", "stats"]
+            },
+            "description": "Get overall statistics: total materials, counts by source, categories, brands"
+          }
+        },
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/categories?source=HOMEDEPOT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", "categories"],
+              "query": [
+                {
+                  "key": "source",
+                  "value": "HOMEDEPOT",
+                  "description": "Optional: filter by source",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get list of all categories"
+          }
+        },
+        {
+          "name": "Get Brands",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/brands?source=HOMEDEPOT&category=Electrical",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", "brands"],
+              "query": [
+                {
+                  "key": "source",
+                  "value": "HOMEDEPOT",
+                  "description": "Optional: filter by source",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "Electrical",
+                  "description": "Optional: filter by category",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get list of all brands"
+          }
+        },
+        {
+          "name": "Get Price History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/materials/:id/price-history?days=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "materials", ":id", "price-history"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30",
+                  "description": "Number of days of history (default: 30)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "uuid-here",
+                  "description": "Material UUID"
+                }
+              ]
+            },
+            "description": "Get price history for a material"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Check if API is running (no auth required)"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import { IsString, IsNumber, IsOptional, IsEnum, IsArray, ValidateNested } from 
 import { Type } from 'class-transformer';
 import { BasicAuthGuard } from '../auth/basic-auth.guard';
 import { MaterialsService, MaterialSearchParams } from './materials.service';
+import { ScrapflyService, ScrapedProduct } from '../scraper/scrapfly.service';
 import { Source } from '@prisma/client';
 
 class SearchMaterialsDto {
@@ -118,10 +119,26 @@ class BulkCreateMaterialsDto {
   materials: CreateMaterialDto[];
 }
 
+class OnDemandSearchDto {
+  @IsString()
+  search: string;
+
+  @IsOptional()
+  @IsEnum(['HOMEDEPOT', 'LOWES', 'BOTH'])
+  source?: 'HOMEDEPOT' | 'LOWES' | 'BOTH';
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+}
+
 @Controller('api/materials')
 @UseGuards(BasicAuthGuard)
 export class MaterialsController {
-  constructor(private readonly materialsService: MaterialsService) {}
+  constructor(
+    private readonly materialsService: MaterialsService,
+    private readonly scrapflyService: ScrapflyService,
+  ) {}
 
   @Get()
   async getMaterials(@Query() query: SearchMaterialsDto) {
@@ -241,5 +258,73 @@ export class MaterialsController {
     }
 
     return results;
+  }
+
+  @Get('scrape-usage')
+  async getScrapflyUsage() {
+    return this.scrapflyService.getUsageStats();
+  }
+
+  @Post('scrape')
+  async scrapeOnDemand(@Body() body: OnDemandSearchDto) {
+    const { search, source = 'HOMEDEPOT', category = 'General' } = body;
+
+    const scrapedProducts: ScrapedProduct[] = [];
+    const savedProducts: any[] = [];
+    let scrapeCount = 0;
+
+    try {
+      if (source === 'HOMEDEPOT' || source === 'BOTH') {
+        const hdProducts = await this.scrapflyService.scrapeHomeDepot(search);
+        scrapedProducts.push(...hdProducts);
+        scrapeCount++;
+      }
+
+      if (source === 'LOWES' || source === 'BOTH') {
+        const lowesProducts = await this.scrapflyService.scrapeLowes(search);
+        scrapedProducts.push(...lowesProducts);
+        scrapeCount++;
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Scrape failed',
+        materials: [],
+        usage: this.scrapflyService.getUsageStats(),
+      };
+    }
+
+    // Save scraped products to database
+    for (const product of scrapedProducts) {
+      if (product.price > 0) {
+        try {
+          const saved = await this.materialsService.upsertMaterial(
+            product.source as Source,
+            {
+              sku: product.sku,
+              name: product.name,
+              brand: product.brand,
+              price: product.price,
+              url: product.url,
+              image: product.image,
+              availability: 'Check store',
+              rating: product.rating,
+            },
+            category,
+          );
+          savedProducts.push(saved);
+        } catch (e) {
+          // Skip duplicates or errors
+        }
+      }
+    }
+
+    return {
+      success: true,
+      materials: savedProducts,
+      total: savedProducts.length,
+      cost: `$${(scrapeCount * 0.001).toFixed(3)}`,
+      usage: this.scrapflyService.getUsageStats(),
+    };
   }
 }

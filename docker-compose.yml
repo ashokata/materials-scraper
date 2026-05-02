@@ -27,6 +27,9 @@ services:
       DATABASE_URL: postgresql://scraper:${DB_PASSWORD:-scraper_secret_2024}@postgres:5432/materials
       AUTH_USERNAME: ${AUTH_USERNAME:-admin}
       AUTH_PASSWORD: ${AUTH_PASSWORD:-materials_api_2024}
+      SCRAPFLY_API_KEY: ${SCRAPFLY_API_KEY:-scp-live-21af792e6f9e44f990bda03eaf8fed78}
+      SCRAPFLY_DAILY_LIMIT: ${SCRAPFLY_DAILY_LIMIT:-50}
+      SCRAPFLY_HOURLY_LIMIT: ${SCRAPFLY_HOURLY_LIMIT:-10}
       PORT: 3000
     depends_on:
       postgres:
