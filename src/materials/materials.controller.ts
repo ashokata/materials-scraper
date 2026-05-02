@@ -9,44 +9,112 @@ import {
   UseGuards,
   HttpCode,
 } from '@nestjs/common';
+import { IsString, IsNumber, IsOptional, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { BasicAuthGuard } from '../auth/basic-auth.guard';
 import { MaterialsService, MaterialSearchParams } from './materials.service';
 import { Source } from '@prisma/client';
 
 class SearchMaterialsDto {
+  @IsOptional()
+  @IsString()
   source?: 'HOMEDEPOT' | 'LOWES';
+
+  @IsOptional()
+  @IsString()
   category?: string;
+
+  @IsOptional()
+  @IsString()
   brand?: string;
+
+  @IsOptional()
+  @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsString()
   minPrice?: string;
+
+  @IsOptional()
+  @IsString()
   maxPrice?: string;
+
+  @IsOptional()
+  @IsString()
   page?: string;
+
+  @IsOptional()
+  @IsString()
   limit?: string;
 }
 
 class BulkDeleteDto {
+  @IsOptional()
+  @IsNumber()
   daysOld?: number;
 }
 
 class CreateMaterialDto {
+  @IsString()
   sku: string;
+
+  @IsEnum(['HOMEDEPOT', 'LOWES'])
   source: 'HOMEDEPOT' | 'LOWES';
+
+  @IsString()
   name: string;
+
+  @IsOptional()
+  @IsString()
   brand?: string;
+
+  @IsOptional()
+  @IsString()
   category?: string;
+
+  @IsOptional()
+  @IsString()
   subcategory?: string;
+
+  @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsNumber()
   price: number;
+
+  @IsOptional()
+  @IsNumber()
   originalPrice?: number;
+
+  @IsOptional()
+  @IsString()
   imageUrl?: string;
+
+  @IsString()
   productUrl: string;
+
+  @IsOptional()
   specifications?: Record<string, string>;
+
+  @IsOptional()
+  @IsString()
   availability?: string;
+
+  @IsOptional()
+  @IsNumber()
   rating?: number;
+
+  @IsOptional()
+  @IsNumber()
   reviewCount?: number;
 }
 
 class BulkCreateMaterialsDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMaterialDto)
   materials: CreateMaterialDto[];
 }
 
