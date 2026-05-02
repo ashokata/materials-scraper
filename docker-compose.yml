@@ -35,7 +35,7 @@ services:
       - "3001:3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.materials.rule=Host(`materials.infieldr.io`)"
+      - "traefik.http.routers.materials.rule=Host(`materials.infieldr.tech`)"
       - "traefik.http.routers.materials.entrypoints=websecure"
       - "traefik.http.routers.materials.tls.certresolver=letsencrypt"
       - "traefik.http.services.materials.loadbalancer.server.port=3000"
