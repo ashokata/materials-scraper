@@ -182,6 +182,11 @@ export class MaterialsController {
     return this.materialsService.getMaterialBySku(sku, source as Source | undefined);
   }
 
+  @Get('scrape-usage')
+  async getScrapflyUsage() {
+    return this.scrapflyService.getUsageStats();
+  }
+
   @Get(':id')
   async getMaterial(@Param('id') id: string) {
     return this.materialsService.getMaterialById(id);
@@ -258,11 +263,6 @@ export class MaterialsController {
     }
 
     return results;
-  }
-
-  @Get('scrape-usage')
-  async getScrapflyUsage() {
-    return this.scrapflyService.getUsageStats();
   }
 
   @Post('scrape')
