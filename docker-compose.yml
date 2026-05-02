@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: materials-db
+    environment:
+      POSTGRES_DB: materials
+      POSTGRES_USER: scraper
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-scraper_secret_2024}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scraper -d materials"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scraper-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: materials-api
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://scraper:${DB_PASSWORD:-scraper_secret_2024}@postgres:5432/materials
+      API_USERNAME: ${API_USERNAME:-admin}
+      API_PASSWORD: ${API_PASSWORD:-materials_api_2024}
+      PORT: 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.materials.rule=Host(`materials.infieldr.io`)"
+      - "traefik.http.routers.materials.entrypoints=websecure"
+      - "traefik.http.routers.materials.tls.certresolver=letsencrypt"
+      - "traefik.http.services.materials.loadbalancer.server.port=3000"
+    restart: unless-stopped
+    networks:
+      - default
+      - traefik_network
+
+volumes:
+  postgres_data:
+
+networks:
+  traefik_network:
+    external: true

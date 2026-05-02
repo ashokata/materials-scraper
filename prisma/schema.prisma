@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Source {
+  HOMEDEPOT
+  LOWES
+}
+
+enum ScrapeJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Material {
+  id              String   @id @default(uuid())
+  sku             String
+  source          Source
+  name            String
+  brand           String?
+  category        String?
+  subcategory     String?
+  description     String?
+  price           Float
+  originalPrice   Float?
+  currency        String   @default("USD")
+  unitOfMeasure   String?
+  imageUrl        String?
+  productUrl      String
+  specifications  Json?
+  availability    String?
+  rating          Float?
+  reviewCount     Int?
+  lastScrapedAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  priceHistory    PriceHistory[]
+
+  @@unique([sku, source])
+  @@index([source])
+  @@index([category])
+  @@index([name])
+  @@index([brand])
+}
+
+model PriceHistory {
+  id          String   @id @default(uuid())
+  materialId  String
+  price       Float
+  scrapedAt   DateTime @default(now())
+
+  material    Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([materialId])
+  @@index([scrapedAt])
+}
+
+model ScrapeJob {
+  id            String          @id @default(uuid())
+  source        Source
+  category      String?
+  query         String?
+  status        ScrapeJobStatus @default(PENDING)
+  itemsScraped  Int             @default(0)
+  totalItems    Int?
+  errorMessage  String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime        @default(now())
+
+  @@index([status])
+  @@index([source])
+}
+
+model ScrapedCategory {
+  id            String   @id @default(uuid())
+  source        Source
+  categoryId    String
+  categoryName  String
+  categoryUrl   String
+  parentId      String?
+  itemCount     Int?
+  lastScrapedAt DateTime?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([source, categoryId])
+  @@index([source])
+  @@index([isActive])
+}
