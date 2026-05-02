@@ -25,8 +25,8 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://scraper:${DB_PASSWORD:-scraper_secret_2024}@postgres:5432/materials
-      API_USERNAME: ${API_USERNAME:-admin}
-      API_PASSWORD: ${API_PASSWORD:-materials_api_2024}
+      AUTH_USERNAME: ${AUTH_USERNAME:-admin}
+      AUTH_PASSWORD: ${AUTH_PASSWORD:-materials_api_2024}
       PORT: 3000
     depends_on:
       postgres:
