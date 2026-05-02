@@ -1,6 +1,9 @@
 # Build stage
 FROM node:22-alpine AS builder
 
+# Cache bust - update to force rebuild
+ARG CACHE_BUST=2026-05-02-v2
+
 WORKDIR /app
 
 # Install dependencies for Prisma
