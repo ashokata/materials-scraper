@@ -335,34 +335,68 @@ export class ScrapflyService {
     const products: ScrapedProduct[] = [];
     const seen = new Set<string>();
 
-    const urlPattern = /href="(\/pd\/[^"]+)"/g;
-    let match;
+    // Pattern 1: Extract product URLs with SKUs
+    const urlPattern = /href="(\/pd\/[^"]+\/(\d{6,}))"/g;
+    const urlMatches: { path: string; sku: string }[] = [];
+    let urlMatch;
+    while ((urlMatch = urlPattern.exec(html)) !== null) {
+      urlMatches.push({ path: urlMatch[1], sku: urlMatch[2] });
+    }
 
-    while ((match = urlPattern.exec(html)) !== null) {
-      const urlPath = match[1];
-      const skuMatch = urlPath.match(/\/(\d{6,})(?:\?|$|#)/);
-      if (!skuMatch) continue;
+    // Pattern 2: Extract all prices from page (format: $XX.XX)
+    // Filter to prices > $5 to exclude page numbers and other small numbers
+    const pricePattern = /\$(\d{1,4})\.(\d{2})/g;
+    const prices: number[] = [];
+    let priceMatch;
+    while ((priceMatch = pricePattern.exec(html)) !== null) {
+      const price = parseFloat(`${priceMatch[1]}.${priceMatch[2]}`);
+      if (price > 5) {
+        prices.push(price);
+      }
+    }
 
-      const sku = skuMatch[1];
+    // Pattern 3: Extract images from Lowes CDN
+    const imgPattern = /src="(https:\/\/mobileimages\.lowes\.com\/productimages\/[^"]+)"/g;
+    const images: string[] = [];
+    let imgMatch;
+    while ((imgMatch = imgPattern.exec(html)) !== null) {
+      images.push(imgMatch[1]);
+    }
+
+    let priceIdx = 0;
+    let imgIdx = 0;
+
+    for (const { path, sku } of urlMatches) {
       if (seen.has(sku)) continue;
       seen.add(sku);
 
-      const namePart = urlPath.split('/pd/')[1]?.split('/')[0] || '';
-      const name = namePart.replace(/-/g, ' ');
+      // Extract name from URL path
+      const namePart = path.split('/pd/')[1]?.split('/')[0] || '';
+      const name = namePart.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+      // Get price if available
+      const price = priceIdx < prices.length ? prices[priceIdx++] : 0;
+
+      // Get image if available (normalize to medium size)
+      let image = '';
+      if (imgIdx < images.length) {
+        image = images[imgIdx++].replace(/\?size=\w+/, '?size=pdhi');
+      }
 
       products.push({
         sku,
         name: name.substring(0, 200),
         brand: '',
-        price: 0,
-        url: `https://www.lowes.com${urlPath}`,
-        image: '',
+        price,
+        url: `https://www.lowes.com${path}`,
+        image,
         source: 'LOWES',
       });
 
       if (products.length >= 24) break;
     }
 
+    this.logger.log(`Lowes fallback extracted ${products.length} products with ${prices.length} prices found`);
     return products;
   }
 }
